@@ -1,0 +1,141 @@
+<html>
+    <head>
+        <title>valuer.cfg generator</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <table><tr>
+            <td style="padding:10px; vertical-align:top;">
+                <form id="mainForm">
+                    <table id="groupTable" style="width:460px; border-collapse: collapse">
+                        <tr class="groupRow">
+                            <td><b>Сэмплы</b> </td>
+                            <td>
+                                <div class="groupBox sample" id="sample" />
+                            </td>
+                        </tr>
+                        <tr id="rowOnlineControl" style="border-top: 2px solid grey">
+                            <td colspan=2><a href="#" id="addOnline">Добавить онлайн-группу</a> / <a href="#" id="delOnline">Удалить онлайн-группу</a></td>
+                        </tr>
+                        <tr class="groupRow" id="rowOfflineControl" style="border-top: 2px solid grey">
+                            <td colspan=2><a href="#" id="addOffline">Добавить оффлайн-группу</a> / <a href="#" id="delOffline">Удалить оффлайн-группу</a></td>
+                        </tr> 
+                    </table>
+                </form>
+            </td>
+            <td style="padding: 10px; border-left: 4px solid grey; vertical-align:top;">
+                <p style="font-family: courier"><b>valuer.cfg:</b></p>
+                <pre style="margin: 10px; font-family: courier; font-size:10pt;" id="valuerCfgContent"></pre>
+                <hr />
+                <p style="font-family: courier"><b>serve.cfg problem section:</b></p>
+                <pre style="margin: 10px; font-family: courier; font-size:10pt;" id="serveCfgContent"></pre>
+                <hr />
+                <p style="font-family: courier"><b>error:</b></p>
+                <pre style="margin: 10px; font-family: courier; font-size:10pt; color: red" id="errContent"></pre>
+            </td>
+        </tr></table>
+    </body>
+    <script>
+        numOnlineGroups = 3;
+        numOfflineGroups = 1;
+        
+        function genGroupRow(index, type, capitalType, russianType) {
+            ++index;
+            return "<tr class=\"groupRow\" id=\"row" + capitalType + "Group" + index + "\"><td><b>" + russianType + "-группа " + index + 
+                   "</b></td><td><div class=\"groupBox " + type + "\" id=\"" + type + index + "\" /></td></tr>";
+        }
+
+        function refreshGroupRows() {
+            onlineGroupRows = $("#groupTable [id*=\"rowOnlineGroup\"]")
+            if (onlineGroupRows.length > numOnlineGroups) {
+                for (var index = numOnlineGroups; index < onlineGroupRows.length; ++index) {
+                    onlineGroupRows[index].remove();
+                }
+            } else if (onlineGroupRows.length < numOnlineGroups) {
+                for (var index = onlineGroupRows.length; index < numOnlineGroups; ++index) {
+                    $(genGroupRow(index, "online", "Online", "Онлайн")).insertBefore("tr #rowOfflineControl")
+                }
+            }
+            
+            offlineGroupRows = $("#groupTable [id*=\"rowOfflineGroup\"]")
+            if (offlineGroupRows.length > numOfflineGroups) {
+                for (var index = numOfflineGroups; index < offlineGroupRows.length; ++index) {
+                    offlineGroupRows[index].remove();
+                }
+            } else if (offlineGroupRows.length < numOfflineGroups) {
+                for (var index = offlineGroupRows.length; index < numOfflineGroups; ++index) {
+                    $(genGroupRow(index, "offline", "Offline", "Оффлайн")).insertAfter("#groupTable tr.groupRow:last")
+                }
+            }
+        }
+
+        function genGroupBox(id) {
+            testCount = id == "sample" ? 2 : 10;
+            points = id == "sample" ? 0 : 25;
+            return "<table>" + 
+                   "<tr><td>Количество тестов</td><td><input name=\"" + id + "Tests[]\" type=\"text\" value=\"" + testCount + "\"></input></td></tr>" +
+                   "<tr><td>Баллы</td><td><input name=\"" + id + "Points[]\" type=\"text\" value=\"" + points + "\"></input></td></tr>" +
+                   "<tr><td>Зависит от</td><td><input name=\"" + id + "Dependencies[]\" type=\"text\"></input></td></tr>" +
+                   "</table>";
+        }
+
+        function refreshGroupBoxes() {
+            groupBoxes = $(".groupBox:not(:has(*))");
+            for (var index = 0; index < groupBoxes.length; ++index) {
+                groupBox = groupBoxes.eq(index);
+                content = groupBox.html(genGroupBox(groupBox.attr("class").split(" ")[1]));
+                $(content).change(refreshEverything);
+            }
+        }
+
+        function putOutput(data) {
+            $("#valuerCfgContent").text(data["valuercfg"]);
+            $("#serveCfgContent").text(data["servecfg"]);
+            $("#errContent").text(data["err"]);
+        }
+
+        function generateOutput() {
+            $("#mainForm").submit();
+        }
+
+        function refreshEverything() {
+            console.debug("refreshed");
+            refreshGroupRows();
+            refreshGroupBoxes();
+            generateOutput();
+        }
+
+        $("#addOnline").click(function() {
+            ++numOnlineGroups;
+            refreshEverything();
+        });
+        $("#delOnline").click(function() {
+            --numOnlineGroups;
+            if (numOnlineGroups == -1)
+                numOnlineGroups = 0;
+            refreshEverything();
+        });
+        $("#addOffline").click(function() {
+            ++numOfflineGroups;
+            refreshEverything();
+        });
+        $("#delOffline").click(function() {
+            --numOfflineGroups;
+            if (numOfflineGroups == -1)
+                numOfflineGroups = 0;
+            refreshEverything();
+        });
+        $("#mainForm").submit(function(e) {
+            var url =  ".";
+            $.ajax({
+                type: "post",
+                url: url,
+                data: $("#mainForm").serialize(),
+                success: putOutput,
+            });
+            e.preventDefault();
+        });
+        refreshEverything();
+    </script>
+</html>
