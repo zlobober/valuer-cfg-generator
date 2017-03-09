@@ -65,11 +65,11 @@ def generate_tests(sample_groups, online_groups, offline_groups):
         print >>servecfg, "test_score_list=\"" + '  '.join(' '.join("0" if j + 1 < tc or i == 0 else groups[i][1] for j in range(tc)) for i, tc in enumerate(test_count)) + "\""
         open_tests="{0}-{1}:full".format(*gp.group_test_indices[0])
         if online_groups > 0:
-            open_tests += ";{0}-{1}:brief".format(gp.group_test_indices[1][0], gp.group_test_indices[online_groups][1])
+            open_tests += ",{0}-{1}:brief".format(gp.group_test_indices[1][0], gp.group_test_indices[online_groups][1])
         if offline_groups > 0:
-            open_tests += ";{0}-{1}:hidden".format(gp.group_test_indices[online_groups + 1][0], gp.group_test_indices[-1][1])
+            open_tests += ",{0}-{1}:hidden".format(gp.group_test_indices[online_groups + 1][0], gp.group_test_indices[-1][1])
         print >>servecfg, "open_tests=\"{0}\"".format(open_tests)
-        print >>servecfg, "full_user_score=\"{0}\"".format(sum(test_points[:(1 + online_groups)]))
+        print >>servecfg, "full_user_score={0}".format(sum(test_points[:(1 + online_groups)]))
         if sum(test_points) != 100:
             print >>err, "Sum of all group points is {0} != 100".format(sum(test_points))
   
